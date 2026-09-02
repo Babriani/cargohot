@@ -1,22 +1,35 @@
-name: Ubuntu + Tailscale
+name: Temporary Ubuntu with Tailscale
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # دستی اجرا می‌شود
 
 jobs:
-  server:
+  temp-server:
     runs-on: ubuntu-latest
+    timeout-minutes: 60   # حداکثر ۱ ساعت زنده بماند
 
     steps:
+      - name: Checkout (اختیاری)
+        uses: actions/checkout@v4
 
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v4
+      - name: Setup Tailscale
+        uses: tailscale/github-action@v3
         with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
+          authkey: ${{ secrets.TS_OAUTH_SECRET }}
+          hostname: gha-temp-${{ github.run_id }}
+          # tags: tag:ci   # اگر تگ گذاشتی
 
-      - name: Check Tailscale
+      - name: Show Tailscale IP
         run: |
+          echo "========================================"
+          echo "Tailscale IP:"
+          tailscale ip -4
+          echo "========================================"
           tailscale status
-          tailscale ip
+
+      - name: Keep alive (برای استفاده دستی)
+        run: |
+          echo "سرور موقتی آماده است. تا ۶۰ دقیقه زنده می‌ماند."
+          echo "می‌توانی از طریق Tailscale به آن SSH بزنی."
+          # اگر بخوای سرور باز بماند تا دستی کار کنی:
+          sleep 3600   # ۱ ساعت صبر می‌کند
